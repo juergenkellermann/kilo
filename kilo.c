@@ -20,6 +20,9 @@ struct termios orig_termios;
 
 /*** terminal ***/
 void die(const char *s) {
+	write(STDOUT_FILENO, "\x1b[2J", 4); // clear screen
+	write(STDOUT_FILENO, "\x1b[H", 3);  // cursor to upper left
+
         perror(s);
 	exit(1);
 }
@@ -57,12 +60,37 @@ char editorReadKey() {
 
 
 
+/*** output ***/
+void editorDrawRows() {
+	int y;
+	for (y = 0; y < 24; y++) {
+		write(STDOUT_FILENO, "~\r\n", 3);
+	}
+}
+
+void editorRefreshScreen() {
+	
+        // https://vt100.net/docs/vt100-ug/chapter3.html
+
+	write(STDOUT_FILENO, "\x1b[2J", 4); // clear screen
+	write(STDOUT_FILENO, "\x1b[H", 3);  // cursor to upper left
+	
+	editorDrawRows();
+	write(STDOUT_FILENO, "\x1b[H", 3);  // cursor to upper left
+
+}
+
+
+
+
 /*** input ***/
 void editorProcessKeypress() {
 	char c = editorReadKey();
 
 	switch (c) {
 		case CTRL_KEY('q'):
+	                write(STDOUT_FILENO, "\x1b[2J", 4); // clear screen
+                	write(STDOUT_FILENO, "\x1b[H", 3);  // cursor to upper left
 			exit(0);
 		        break;
 	}
@@ -75,6 +103,7 @@ int main() {
 	enableRawMode();
 
 	while (1) {
+		editorRefreshScreen();
 		editorProcessKeypress();
 	}
 
